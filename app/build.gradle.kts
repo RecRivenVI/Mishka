@@ -14,6 +14,7 @@ plugins {
 }
 
 dependencies {
+    compileOnly(projects.hiddenApi)
     baselineProfile(projects.baselineprofile)
     implementation(platform(libs.koin.bom))
     implementation(libs.bundles.koin)
@@ -24,12 +25,18 @@ dependencies {
     implementation(libs.bundles.ktor)
     implementation(libs.bundles.miuix)
     implementation(libs.androidx.activity)
+    implementation(projects.appProcess)
+    implementation(libs.androidx.core)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.profileinstaller)
     implementation(libs.material.icons.extended)
     implementation(libs.hiddenapibypass)
+    implementation(libs.focus.api)
     implementation(libs.quickie.bundled)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     implementation(libs.scripta.editor)
+    testImplementation(libs.junit4)
     ksp(libs.androidx.room3.compiler)
 }
 

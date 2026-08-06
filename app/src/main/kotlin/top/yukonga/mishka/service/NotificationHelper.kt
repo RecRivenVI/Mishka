@@ -6,8 +6,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
+import androidx.core.app.NotificationCompat
+import com.xzakota.hyper.notification.focus.FocusNotification
 import top.yukonga.mishka.MainActivity
 import top.yukonga.mishka.R
+import top.yukonga.mishka.platform.TunMode
+import top.yukonga.mishka.platform.VpnNotificationStyle
 import top.yukonga.mishka.service.NotificationHelper.PROFILE_PROGRESS_ID_BASE
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -97,7 +102,7 @@ object NotificationHelper {
 
     // === VPN 通知 ===
 
-    fun buildNotification(context: Context, title: String, content: String): Notification {
+    private fun buildNotification(context: Context, title: String, content: String): Notification {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -117,7 +122,7 @@ object NotificationHelper {
             .build()
     }
 
-    fun buildLoadingNotification(context: Context): Notification {
+    private fun buildLoadingNotification(context: Context): Notification {
         return buildNotification(
             context,
             context.getString(R.string.app_name),
@@ -125,7 +130,7 @@ object NotificationHelper {
         )
     }
 
-    fun buildRunningNotification(context: Context, mode: String = "VpnService"): Notification {
+    private fun buildRunningNotification(context: Context, mode: String): Notification {
         return buildNotification(
             context,
             context.getString(R.string.notification_running_title),
@@ -133,7 +138,195 @@ object NotificationHelper {
         )
     }
 
-    fun buildDynamicNotification(
+    private fun tunnelModeText(context: Context, tunMode: TunMode): String = context.getString(
+        when (tunMode) {
+            TunMode.Vpn -> R.string.settings_tun_mode_vpn
+            TunMode.RootTun -> R.string.settings_tun_mode_root_tun
+            TunMode.RootTproxy -> R.string.settings_tun_mode_root_tproxy
+        },
+    )
+
+    private fun compactTunnelModeText(tunMode: TunMode): String = when (tunMode) {
+        TunMode.Vpn -> "VPN"
+        TunMode.RootTun -> "TUN"
+        TunMode.RootTproxy -> "TPROXY"
+    }
+
+    fun buildVpnNotification(
+        context: Context,
+        content: VpnNotificationContent,
+        style: VpnNotificationStyle,
+        outerGlow: Boolean,
+    ): Notification {
+        val values = contentValues(context, content)
+        return when (style) {
+            VpnNotificationStyle.Standard ->
+                when (content) {
+                    VpnNotificationContent.Loading ->
+                        buildLoadingNotification(context)
+
+                    is VpnNotificationContent.Running ->
+                        buildRunningNotification(context, values.modeText)
+
+                    is VpnNotificationContent.Dynamic ->
+                        buildDynamicNotification(
+                            context = context,
+                            profileName = content.profileName,
+                            uploadTotal = content.uploadTotal,
+                            downloadTotal = content.downloadTotal,
+                            uploadSpeed = content.uploadSpeed,
+                            downloadSpeed = content.downloadSpeed,
+                        )
+                }
+
+            VpnNotificationStyle.LiveActivity ->
+                buildLiveActivityNotification(
+                    context = context,
+                    title = values.title,
+                    content = values.body,
+                    shortText = values.shortText,
+                )
+
+            VpnNotificationStyle.MiIsland ->
+                buildMiIslandNotification(
+                    context = context,
+                    title = values.title,
+                    content = values.body,
+                    shortText = values.shortText,
+                    outerGlow = outerGlow,
+                )
+        }
+    }
+
+    private fun contentValues(
+        context: Context,
+        content: VpnNotificationContent,
+    ): ContentValues =
+        when (content) {
+            VpnNotificationContent.Loading -> ContentValues(
+                title = context.getString(R.string.app_name),
+                body = context.getString(R.string.notification_loading),
+                shortText = context.getString(R.string.notification_short_starting),
+                modeText = "",
+            )
+
+            is VpnNotificationContent.Running -> {
+                val modeText = tunnelModeText(context, content.tunMode)
+                ContentValues(
+                    title = context.getString(R.string.notification_running_title),
+                    body = context.getString(R.string.notification_running_content, modeText),
+                    shortText = compactTunnelModeText(content.tunMode),
+                    modeText = modeText,
+                )
+            }
+
+            is VpnNotificationContent.Dynamic -> {
+                val modeText = tunnelModeText(context, content.tunMode)
+                ContentValues(
+                    title = content.profileName + " • " + content.uploadTotal + "↑ " + content.downloadTotal + "↓",
+                    body = content.uploadSpeed + "↑ " + content.downloadSpeed + "↓",
+                    shortText = compactTunnelModeText(content.tunMode),
+                    modeText = modeText,
+                )
+            }
+        }
+
+    private data class ContentValues(
+        val title: String,
+        val body: String,
+        val shortText: String,
+        val modeText: String,
+    )
+
+    private fun buildLiveActivityNotification(
+        context: Context,
+        title: String,
+        content: String,
+        shortText: String,
+    ): Notification {
+        return NotificationCompat.Builder(context, CHANNEL_VPN)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(contentIntent(context))
+            .setShortCriticalText(shortText)
+            .setRequestPromotedOngoing(true)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+            .build()
+    }
+
+    private fun buildMiIslandNotification(
+        context: Context,
+        title: String,
+        content: String,
+        shortText: String,
+        outerGlow: Boolean,
+    ): Notification {
+        val builder = NotificationCompat.Builder(context, CHANNEL_VPN)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(contentIntent(context))
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+
+        val islandExtras = FocusNotification.buildV3 {
+            val iconKey = createPicture(
+                "mishka_icon",
+                Icon.createWithResource(context, R.mipmap.ic_launcher),
+            )
+            updatable = true
+            ticker = title
+            tickerPic = iconKey
+            islandFirstFloat = true
+            enableFloat = false
+            if (outerGlow) outEffectSrc = "outer_glow"
+
+            island {
+                islandProperty = 1
+                bigIslandArea {
+                    imageTextInfoLeft {
+                        type = 1
+                        picInfo {
+                            type = 1
+                            pic = iconKey
+                        }
+                    }
+                    imageTextInfoRight {
+                        type = 3
+                        textInfo {
+                            this.title = shortText
+                        }
+                    }
+                }
+                smallIslandArea {
+                    picInfo {
+                        type = 1
+                        pic = iconKey
+                    }
+                }
+            }
+
+            iconTextInfo {
+                this.title = title
+                this.content = content
+                animIconInfo {
+                    type = 0
+                    src = iconKey
+                }
+            }
+        }
+
+        return builder.addExtras(islandExtras).build()
+    }
+
+    private fun buildDynamicNotification(
         context: Context,
         profileName: String,
         uploadTotal: String,
@@ -141,25 +334,29 @@ object NotificationHelper {
         uploadSpeed: String,
         downloadSpeed: String,
     ): Notification {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
         return Notification.Builder(context, CHANNEL_VPN)
             .setContentTitle("$profileName • $uploadTotal↑ $downloadTotal↓")
             .setContentText("$uploadSpeed↑ $downloadSpeed↓")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(contentIntent(context))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
+    }
+
+    private fun contentIntent(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     fun buildWifiPolicyServiceNotification(context: Context): Notification {
