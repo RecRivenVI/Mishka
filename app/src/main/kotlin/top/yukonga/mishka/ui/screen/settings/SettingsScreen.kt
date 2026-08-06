@@ -19,7 +19,6 @@ import top.yukonga.mishka.BuildConfig
 import top.yukonga.mishka.R
 import top.yukonga.mishka.platform.BootStartManager
 import top.yukonga.mishka.platform.PlatformStorage
-import top.yukonga.mishka.platform.ProxyServiceBridge
 import top.yukonga.mishka.platform.StorageKeys
 import top.yukonga.mishka.ui.component.AdaptiveTopAppBar
 import top.yukonga.mishka.ui.component.CardItem
@@ -53,6 +52,7 @@ fun SettingsScreen(
     onNavigateFileManager: () -> Unit = {},
     onNavigateBackup: () -> Unit = {},
     onNavigateAbout: () -> Unit = {},
+    onNavigateNotificationSettings: () -> Unit = {},
     bootStartManager: BootStartManager? = null,
     storage: PlatformStorage? = null,
     onHideTaskCardChange: ((Boolean) -> Unit)? = null,
@@ -65,9 +65,6 @@ fun SettingsScreen(
     }
     var isAutoConnectEnabled by remember {
         mutableStateOf(storage?.getString(StorageKeys.AUTO_CONNECT_ON_LAUNCH, "false") == "true")
-    }
-    var isDynamicNotificationEnabled by remember {
-        mutableStateOf(storage?.getString(StorageKeys.DYNAMIC_NOTIFICATION, "true") != "false")
     }
     var isUpdateViaProxyEnabled by remember {
         mutableStateOf(storage?.getString(StorageKeys.SUBSCRIPTION_UPDATE_VIA_PROXY, "true") != "false")
@@ -245,21 +242,11 @@ fun SettingsScreen(
                                 )
                             })
                         }
-                        add(CardItem("dynamicNotification") {
-                            val isVpnMode = tunModeIndex == 0
-                            SwitchPreference(
-                                title = stringResource(R.string.settings_dynamic_notification),
-                                summary = stringResource(
-                                    if (isVpnMode) R.string.settings_dynamic_notification_summary
-                                    else R.string.settings_dynamic_notification_summary_root_unsupported
-                                ),
-                                checked = isDynamicNotificationEnabled && isVpnMode,
-                                enabled = isVpnMode,
-                                onCheckedChange = { checked ->
-                                    storage?.putString(StorageKeys.DYNAMIC_NOTIFICATION, if (checked) "true" else "false")
-                                    isDynamicNotificationEnabled = checked
-                                    ProxyServiceBridge.requestNotificationRefresh()
-                                },
+                        add(CardItem("notificationSettings") {
+                            ArrowPreference(
+                                title = stringResource(R.string.notification_settings),
+                                summary = stringResource(R.string.notification_settings_summary),
+                                onClick = onNavigateNotificationSettings,
                             )
                         })
                         add(CardItem("subscriptionViaProxy") {

@@ -18,10 +18,12 @@ import top.yukonga.mishka.di.viewModelModule
 import top.yukonga.mishka.platform.PlatformStorage
 import top.yukonga.mishka.platform.StorageKeys
 import top.yukonga.mishka.platform.initToastPlatform
+import top.yukonga.mishka.platform.privileged.DeviceCapabilityProvider
 import top.yukonga.mishka.service.NotificationHelper
 import top.yukonga.mishka.service.ProfileFileOps
 import top.yukonga.mishka.service.ProfileUpdateScheduler
 import top.yukonga.mishka.service.RootHelper
+import top.yukonga.mishka.service.SuperIslandBypass
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
@@ -35,8 +37,11 @@ class MishkaApplication : Application() {
 
     // 自动更新闹钟随 imported 表对账，进程一起就接上（后台服务拉起的进程同样需要）
     private val updateScheduler: ProfileUpdateScheduler by inject()
+    private val capabilityProvider: DeviceCapabilityProvider by inject()
+    private val superIslandBypass: SuperIslandBypass by inject()
 
     override fun onCreate() {
+        HiddenApiBypass.addHiddenApiExemptions("")
         super.onCreate()
         instance = this
         startKoin {
@@ -45,6 +50,8 @@ class MishkaApplication : Application() {
         }
         initToastPlatform(this)
         NotificationHelper.createChannels(this)
+        superIslandBypass.recoverPending()
+        capabilityProvider.refreshNotificationCapabilities()
         extractGeoFiles()
         // 必须在 extractGeoFiles 之后；UA 用订阅服务白名单接受的字符串
         MishkaCoreBridge.init(
@@ -57,7 +64,6 @@ class MishkaApplication : Application() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val prefs = getSharedPreferences("mishka_prefs", MODE_PRIVATE)
             val enable = prefs.getString("predictive_back", "false") == "true"
-            HiddenApiBypass.addHiddenApiExemptions("Landroid/content/pm/ApplicationInfo;->setEnableOnBackInvokedCallback")
             setEnableOnBackInvokedCallback(applicationInfo, enable)
         }
     }

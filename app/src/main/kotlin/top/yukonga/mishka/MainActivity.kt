@@ -40,6 +40,7 @@ import top.yukonga.mishka.platform.PlatformStorage
 import top.yukonga.mishka.platform.ProxyServiceController
 import top.yukonga.mishka.platform.StorageKeys
 import top.yukonga.mishka.platform.WifiPolicyController
+import top.yukonga.mishka.platform.privileged.DeviceCapabilityProvider
 import top.yukonga.mishka.service.RootHelper
 import top.yukonga.mishka.ui.theme.ThemeConfig
 import top.yukonga.mishka.ui.theme.readThemeConfig
@@ -52,6 +53,7 @@ import top.yukonga.mishka.viewmodel.HomeViewModel
 import top.yukonga.mishka.viewmodel.LogViewModel
 import top.yukonga.mishka.viewmodel.MetaSettingsViewModel
 import top.yukonga.mishka.viewmodel.NetworkSettingsViewModel
+import top.yukonga.mishka.viewmodel.NotificationSettingsViewModel
 import top.yukonga.mishka.viewmodel.ProviderViewModel
 import top.yukonga.mishka.viewmodel.ProxyViewModel
 import top.yukonga.mishka.viewmodel.SubscriptionViewModel
@@ -61,6 +63,7 @@ private const val STATE_DEEPLINK_NONCE = "deeplink_nonce"
 class MainActivity : ComponentActivity() {
 
     private lateinit var serviceController: ProxyServiceController
+    private lateinit var capabilityProvider: DeviceCapabilityProvider
     private lateinit var homeViewModel: HomeViewModel
     private lateinit var subscriptionViewModel: SubscriptionViewModel
     private lateinit var proxyViewModel: ProxyViewModel
@@ -69,6 +72,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var connectionViewModel: ConnectionViewModel
     private lateinit var dnsQueryViewModel: DnsQueryViewModel
     private lateinit var networkSettingsViewModel: NetworkSettingsViewModel
+    private lateinit var notificationSettingsViewModel: NotificationSettingsViewModel
     private lateinit var metaSettingsViewModel: MetaSettingsViewModel
     private lateinit var externalControlViewModel: ExternalControlViewModel
     private lateinit var appProxyViewModel: AppProxyViewModel
@@ -154,6 +158,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { profileProcessor.cleanupResidual() }
         top.yukonga.mishka.ui.platform.IconDiskCache.init(this)
         serviceController = get()
+        capabilityProvider = get()
         // VPN 授权走 Activity Result API：MainActivity 注册 launcher，由 ProxyServiceController 触发，
         // 授权通过后回调里重新 startProxy（此时已持权限，直接拉起 Service）
         vpnPermissionLauncher = registerForActivityResult(
@@ -191,6 +196,7 @@ class MainActivity : ComponentActivity() {
         connectionViewModel = get()
         dnsQueryViewModel = get()
         networkSettingsViewModel = get()
+        notificationSettingsViewModel = get()
         metaSettingsViewModel = get()
         externalControlViewModel = get()
         appProxyViewModel = get()
@@ -248,6 +254,7 @@ class MainActivity : ComponentActivity() {
                 connectionViewModel = connectionViewModel,
                 dnsQueryViewModel = dnsQueryViewModel,
                 networkSettingsViewModel = networkSettingsViewModel,
+                notificationSettingsViewModel = notificationSettingsViewModel,
                 metaSettingsViewModel = metaSettingsViewModel,
                 externalControlViewModel = externalControlViewModel,
                 appProxyViewModel = appProxyViewModel,
@@ -388,6 +395,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         latestThemeConfig?.let(::updateEdgeToEdge)
+        capabilityProvider.refreshNotificationCapabilities()
         serviceController.verifyAndSyncState()
     }
 

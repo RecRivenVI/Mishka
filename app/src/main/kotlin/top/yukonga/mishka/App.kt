@@ -29,6 +29,7 @@ import top.yukonga.mishka.viewmodel.HomeViewModel
 import top.yukonga.mishka.viewmodel.LogViewModel
 import top.yukonga.mishka.viewmodel.MetaSettingsViewModel
 import top.yukonga.mishka.viewmodel.NetworkSettingsViewModel
+import top.yukonga.mishka.viewmodel.NotificationSettingsViewModel
 import top.yukonga.mishka.viewmodel.ProviderViewModel
 import top.yukonga.mishka.viewmodel.ProxyViewModel
 import top.yukonga.mishka.viewmodel.SubscriptionViewModel
@@ -51,6 +52,7 @@ fun App(
     connectionViewModel: ConnectionViewModel? = null,
     dnsQueryViewModel: DnsQueryViewModel? = null,
     networkSettingsViewModel: NetworkSettingsViewModel? = null,
+    notificationSettingsViewModel: NotificationSettingsViewModel? = null,
     metaSettingsViewModel: MetaSettingsViewModel? = null,
     externalControlViewModel: ExternalControlViewModel? = null,
     appProxyViewModel: AppProxyViewModel? = null,
@@ -136,6 +138,7 @@ fun App(
                 connectionViewModel = connectionViewModel,
                 dnsQueryViewModel = dnsQueryViewModel,
                 networkSettingsViewModel = networkSettingsViewModel,
+                notificationSettingsViewModel = notificationSettingsViewModel,
                 metaSettingsViewModel = metaSettingsViewModel,
                 externalControlViewModel = externalControlViewModel,
                 appProxyViewModel = appProxyViewModel,

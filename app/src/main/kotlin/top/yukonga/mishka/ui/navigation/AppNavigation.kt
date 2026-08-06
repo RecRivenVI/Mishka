@@ -88,6 +88,7 @@ import top.yukonga.mishka.ui.screen.settings.FileManagerEditorScreen
 import top.yukonga.mishka.ui.screen.settings.FileManagerScreen
 import top.yukonga.mishka.ui.screen.settings.MetaSettingsScreen
 import top.yukonga.mishka.ui.screen.settings.NetworkSettingsScreen
+import top.yukonga.mishka.ui.screen.settings.NotificationSettingsScreen
 import top.yukonga.mishka.ui.screen.settings.RootSettingsScreen
 import top.yukonga.mishka.ui.screen.settings.SettingsScreen
 import top.yukonga.mishka.ui.screen.settings.ThemeSettingsScreen
@@ -113,6 +114,7 @@ import top.yukonga.mishka.viewmodel.HomeViewModel
 import top.yukonga.mishka.viewmodel.LogViewModel
 import top.yukonga.mishka.viewmodel.MetaSettingsViewModel
 import top.yukonga.mishka.viewmodel.NetworkSettingsViewModel
+import top.yukonga.mishka.viewmodel.NotificationSettingsViewModel
 import top.yukonga.mishka.viewmodel.ProviderViewModel
 import top.yukonga.mishka.viewmodel.ProxyViewModel
 import top.yukonga.mishka.viewmodel.SubscriptionViewModel
@@ -186,6 +188,7 @@ fun AppNavigation(
     connectionViewModel: ConnectionViewModel? = null,
     dnsQueryViewModel: DnsQueryViewModel? = null,
     networkSettingsViewModel: NetworkSettingsViewModel? = null,
+    notificationSettingsViewModel: NotificationSettingsViewModel? = null,
     metaSettingsViewModel: MetaSettingsViewModel? = null,
     externalControlViewModel: ExternalControlViewModel? = null,
     appProxyViewModel: AppProxyViewModel? = null,
@@ -394,6 +397,14 @@ fun AppNavigation(
                     )
                 }
             }
+            entry<Route.NotificationSettings>(swipeDismiss = swipeDismiss) {
+                notificationSettingsViewModel?.let {
+                    NotificationSettingsScreen(
+                        viewModel = it,
+                        onBack = { navigator.pop() },
+                    )
+                }
+            }
             entry<Route.AppProxy>(swipeDismiss = swipeDismiss) {
                 appProxyViewModel?.let {
                     AppProxyScreen(
@@ -543,6 +554,7 @@ private fun MainPage(
                     onNavigateFileManager = { navigator.push(Route.FileManager) },
                     onNavigateBackup = { navigator.push(Route.BackupRestore) },
                     onNavigateAbout = { navigator.push(Route.About) },
+                    onNavigateNotificationSettings = { navigator.push(Route.NotificationSettings) },
                     bootStartManager = bootStartManager,
                     storage = storage,
                     onHideTaskCardChange = onHideTaskCardChange,

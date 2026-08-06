@@ -24,6 +24,7 @@ import top.yukonga.mishka.domain.model.resolveExternalController
 import top.yukonga.mishka.platform.AppListProvider
 import top.yukonga.mishka.platform.BootSession
 import top.yukonga.mishka.platform.PlatformStorage
+import top.yukonga.mishka.platform.NotificationRefreshReason
 import top.yukonga.mishka.platform.ProxyServiceBridge
 import top.yukonga.mishka.platform.ProxyServiceController
 import top.yukonga.mishka.platform.ProxyServiceStatus
@@ -60,8 +61,9 @@ class MishkaRootService : Service() {
     // 跑在 Default 上会长时间占住数个 CPU 池线程，与 Compose 重组、导入管线抢同一批核
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val runner by lazy { MihomoRunner(this) }
+    private val notificationPublisher: VpnNotificationPublisher by inject()
     private val dynamicNotification by lazy {
-        DynamicNotificationManager(this, scope, MishkaApplication.instance.connectionManager)
+        DynamicNotificationManager(scope, MishkaApplication.instance.connectionManager, notificationPublisher)
     }
 
     // 取 Koin 单例而非自建：store 的内存值是权威值，自建实例读不到 UI 侧刚落的设置
@@ -87,10 +89,7 @@ class MishkaRootService : Service() {
         super.onCreate()
         NotificationHelper.createChannels(this)
         try {
-            startForeground(
-                NotificationHelper.NOTIFICATION_ID_VPN,
-                NotificationHelper.buildLoadingNotification(this),
-            )
+            notificationPublisher.startForeground(this, VpnNotificationContent.Loading)
         } catch (e: Exception) {
             Log.e(TAG, "startForeground failed", e)
             ProxyServiceBridge.updateState(
@@ -105,7 +104,8 @@ class MishkaRootService : Service() {
         }
         // 监听动态通知设置变化，实时切换通知样式
         notificationRefreshJob = scope.launch {
-            ProxyServiceBridge.notificationRefresh.collect {
+            ProxyServiceBridge.notificationRefresh.collect { reason ->
+                notificationPublisher.onRefreshRequested(reason == NotificationRefreshReason.Settings)
                 val state = ProxyServiceBridge.state.value
                 if (state.state == ProxyState.Running && isRootRunning(state.tunMode)) {
                     dynamicNotification.stop()
@@ -617,6 +617,7 @@ class MishkaRootService : Service() {
         notificationRefreshJob?.cancel()
         monitorJob?.cancel()
         dynamicNotification.stop()
+        notificationPublisher.releaseService(this)
         // 注意：onDestroy 不 kill mihomo，让它继续运行以便重连
         ProxyServiceBridge.markStoppedUnlessError(currentSubmode.tunMode)
         scope.cancel()

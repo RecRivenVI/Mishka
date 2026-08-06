@@ -34,4 +34,6 @@ dependencyResolutionManagement {
 includeBuild("scripta")
 
 include(":app")
+include(":app-process")
 include(":baselineprofile")
+include(":hidden-api")

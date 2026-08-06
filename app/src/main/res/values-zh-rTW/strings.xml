@@ -571,4 +571,25 @@
     <string name="meta_age_copy_secret">複製私鑰</string>
     <string name="meta_age_copy_public">複製公鑰</string>
     <string name="meta_age_keygen_failed">產生金鑰組失敗</string>
+    <string name="notification_settings">通知設定</string>
+    <string name="notification_settings_summary">授權方式、通知樣式、動態通知</string>
+    <string name="notification_short_starting">正在啟動</string>
+    <string name="notification_authorizer_none">無授權</string>
+    <string name="notification_authorizer_shizuku">Shizuku</string>
+    <string name="notification_authorizer_root">Root</string>
+    <string name="notification_authorizer_root_with_manager">Root (%1$s)</string>
+    <string name="notification_shizuku_not_running_snackbar">Shizuku 未執行，請啟動後重試</string>
+    <string name="notification_shizuku_not_granted_snackbar">未取得 Shizuku 授權</string>
+    <string name="notification_style">通知樣式</string>
+    <string name="notification_style_standard">標準通知</string>
+    <string name="notification_style_live_activity">即時動態通知</string>
+    <string name="notification_style_mi_island">小米超級島</string>
+    <string name="notification_style_unsupported_desc">僅支援標準通知樣式</string>
+    <string name="notification_style_permission_required_desc">系統設定中未啟用進階通知權限</string>
+    <string name="notification_section_preferences">偏好設定</string>
+    <string name="notification_mi_island_bypass">繞過超級島限制</string>
+    <string name="notification_mi_island_bypass_summary">繞過超級島系統簽章驗證限制</string>
+    <string name="notification_mi_island_bypass_summary_no_privilege">需要 Shizuku 或 Root 授權</string>
+    <string name="notification_mi_island_outer_glow">外發光效果</string>
+    <string name="notification_mi_island_outer_glow_summary">為超級島邊緣新增類似系統應用的外發光特效</string>
 </resources>

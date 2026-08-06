@@ -102,6 +102,10 @@ object StorageKeys {
     const val THEME_DENSITY_SCALE = "theme_density_scale"
     const val NAV_RAIL_EXPANDED = "nav_rail_expanded"
     const val DYNAMIC_NOTIFICATION = "dynamic_notification"
+    const val NOTIFICATION_STYLE = "notification_style"
+    const val NOTIFICATION_AUTHORIZER = "notification_authorizer"
+    const val MI_ISLAND_BYPASS_RESTRICTION = "mi_island_bypass_restriction"
+    const val MI_ISLAND_OUTER_GLOW = "mi_island_outer_glow"
     const val PREDICTIVE_BACK = "predictive_back"
     // 横移返回手势，默认启用；由 AppNavigation 持有状态实时生效，这里只作持久化
     const val SWIPE_DISMISS = "swipe_dismiss"

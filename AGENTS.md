@@ -1,6 +1,6 @@
 # Mishka
 
-miuix + mihomo 的 Android 代理客户端。单模块 `:app`（`com.android.application`，AGP 9 内置 Kotlin，源码全在 `src/main`）+ `:baselineprofile`（`com.android.test`，只产 Baseline Profile 不进 APK）。UI 用 AndroidX Compose，miuix 走其 `-android` 发布件。
+miuix + mihomo 的 Android 代理客户端。应用代码全在 `:app`（`com.android.application`，AGP 9 内置 Kotlin，源码全在 `src/main`）；另有三个不含应用逻辑的模块：`:baselineprofile`（`com.android.test`，只产 Baseline Profile 不进 APK）、`:app-process`（`com.android.library`，root 特权桥）、`:hidden-api`（`com.android.library`，隐藏 API stub，`compileOnly` 引入不进 APK）。UI 用 AndroidX Compose，miuix 走其 `-android` 发布件。
 
 本文件是 agent 指南的入口。`CLAUDE.md` 只有一行 `@AGENTS.md`——Claude Code 只自动读 `CLAUDE.md`。两块只在特定改动里才需要的约束拆了出去，**按需读、不自动加载**：[docs/root-mode.md](docs/root-mode.md)（改 ROOT / iptables / `su` 相关代码前）、[docs/ui-guidelines.md](docs/ui-guidelines.md)（改 `ui/` 下任何文件前）。其余长期约束都在本文件。
 
@@ -8,7 +8,7 @@ miuix + mihomo 的 Android 代理客户端。单模块 `:app`（`com.android.app
 
 - 每次改动至少跑 `git diff --check` + 与变更匹配的 Gradle 任务。
 - 改 Kotlin 用 `./gradlew :app:compileDebugKotlin -x buildMihomo_arm64_v8a`（秒级，跳过 Go cgo）；验证 native / 打包才 `:app:assembleDebug`（分钟级）；真机 `:app:installDebug`。
-- 新增 composable 后临时加 `composeCompiler { reportsDestination.set(layout.buildDirectory.dir("compose_reports")) }` + `--rerun-tasks` 跑报告，确认 restartable 全部 skippable、0 unstable 参数（当前 101 个），验完删掉临时配置。
+- 新增 composable 后临时加 `composeCompiler { reportsDestination.set(layout.buildDirectory.dir("compose_reports")) }` + `--rerun-tasks` 跑报告，确认 restartable 全部 skippable、0 unstable 参数（当前 103 个），验完删掉临时配置。
 - `mihomo/` 是 submodule、`scripta/` 是 includeBuild 复合构建，改前先确认确需触及；首次 clone 后跑 `git submodule update --init --recursive`。
 - 保留用户已有的未提交改动；不用破坏性 reset/checkout；不修改或输出 `local.properties`。
 - 完成后先报告变更与验证结果。**除非用户在当前请求中明确授权，不执行 `git add`/`commit`/`push`**。
@@ -16,7 +16,7 @@ miuix + mihomo 的 Android 代理客户端。单模块 `:app`（`com.android.app
 
 ## 技术栈
 
-Kotlin（AGP 9 内置，不加独立 kotlin 插件）+ KSP。UI：Compose（经 miuix `-android` 件传递）+ miuix + navigation3 + material-icons-extended。数据：Room 3（反射 builder）+ Ktor + kotlinx-* + Koin。其他：quickie 扫码、hiddenapibypass 预测性返回。核心：mihomo（Mishka fork）。
+Kotlin（AGP 9 内置，不加独立 kotlin 插件）+ KSP。UI：Compose（经 miuix `-android` 件传递）+ miuix + navigation3 + material-icons-extended。数据：Room 3（反射 builder）+ Ktor + kotlinx-* + Koin。其他：quickie 扫码、hiddenapibypass（预测性返回 + 特权链路的隐藏 API 全局放行）、shizuku api/provider、focus-api（HyperOS Focus V3 通知 DSL）、commons-cli（`:app-process` 侧解析 root 子进程参数）。核心：mihomo（Mishka fork）。
 
 **版本与坐标唯一真源 = `gradle/libs.versions.toml`**（含 `[bundles]`），mihomo 版本在 `gradle.properties`，坐标/SDK 在 `buildSrc/ProjectConfig.kt`；**文档不复述版本号**，版本信息走 `BuildConfig.VERSION_NAME`/`VERSION_CODE`。`scripta:editor` 经 `includeBuild("scripta")` 引入，插件由 scripta 自己的 `pluginManagement` 解析。
 
@@ -29,14 +29,16 @@ Kotlin（AGP 9 内置，不加独立 kotlin 插件）+ KSP。UI：Compose（经 
 分层靠**包名**，跨层即普通包引用。约定（非 Gradle 强制）：`domain.model` 只放 `@Serializable` 模型、`domain.repository` 只放仓库接口，二者不引 android/compose/ktor/room。
 
 ```
-buildSrc/  ProjectConfig（坐标/SDK）+ GoBuildTask（Go 交叉编译）
-mihomo/    submodule（YuKongA/mihomo branch Mishka，5 patch）
-scripta/   includeBuild 复合构建（YAML 编辑器），app 依赖 scripta:editor
+buildSrc/     ProjectConfig（坐标/SDK）+ GoBuildTask（Go 交叉编译）
+mihomo/       submodule（YuKongA/mihomo branch Mishka，5 patch）
+scripta/      includeBuild 复合构建（YAML 编辑器），app 依赖 scripta:editor
+app-process/  `su` → app_process → 广播回传 Binder 的特权桥（移植自 IslandRecorder，包名保持 com.rosan.app_process）
+hidden-api/   5 个隐藏 API stub，app 侧 compileOnly 引入，不进 APK
 app/src/main/
 ├── kotlin/.../mishka/  App / MainActivity / MishkaApplication（startKoin + 全局初始化）
 │   ├── domain/{model,repository}
 │   ├── data/{api（REST/WS + MihomoConnectionManager）,bridge（MishkaCoreBridge）,database,repository（*Impl + ProfileProcessor + OverrideJsonStore + SubscriptionProxyResolver）,backup}
-│   ├── platform/  service/  viewmodel/  util/  di/（4 个 Koin 模块）
+│   ├── platform/（含 privileged/：Root/Shizuku 授权链路）  service/  viewmodel/  util/  di/（4 个 Koin 模块）
 │   └── ui/{navigation,navigation3,component,platform,theme,screen}
 ├── res/values{,-zh-rCN,-zh-rTW}/   assets/（构建时下载 GeoIP）   schemas/（Room）
 ├── cpp/  process_helper.c + mishka_jni.c + mihomo_wrapper.c + CMakeLists.txt
@@ -205,7 +207,15 @@ CMake `dependsOn(buildMihomo)`，产两个轻量件链 libmihomo.so（IMPORTED +
 
 **Flow.catch 是终结型操作**：`.catch` 捕获后流结束、不会重订阅。长生命周期 UI/通知 Flow 的瞬态异常（如 `notify()` 偶发 `RemoteServiceException`）应包到 `collect` 内部用 `runCatching` 处理；`.catch` 只留给真正需要终结的失败。DynamicNotificationManager 曾因顶层 `.catch` 让整条 trafficJob 永久死亡。
 
-**startForeground 防御**：Tun/Root/ProfileWorker 的 onCreate 均 `try { startForeground() } catch(Exception)`。真实风险是 API 31+ `ForegroundServiceStartNotAllowedException` 和 API 34+ FGS type 异常（非 POST_NOTIFICATIONS 拒绝）。失败路径：Tun/Root 上报 Error + `stopSelf()`；ProfileWorker 置标记后 `stopSelf()`，之后到达的 start 一律拒收。**不降级为普通 Service**。
+**startForeground 防御**：Tun/Root/ProfileWorker 的 onCreate 均 `try { startForeground() } catch(Exception)`。真实风险是 API 31+ `ForegroundServiceStartNotAllowedException` 和 API 34+ FGS type 异常（非 POST_NOTIFICATIONS 拒绝）。失败路径：Tun/Root 上报 Error + `stopSelf()`；ProfileWorker 置标记后 `stopSelf()`，之后到达的 start 一律拒收。**不降级为普通 Service**。`ProxyServiceController` 必须在入口同步、立即调用 `startForegroundService` 并包 `runCatching`；超级岛预热不得挡在前面——延后调用会放弃用户交互带来的 FGS 启动豁免窗口。冷会话由发布器先普通 `startForeground`、再在 IO 补发绕过通知。
+
+**`mishka_vpn` 的三种样式与发布单点**：标准 / 实时动态通知 / 小米超级岛三种样式共用渠道与 `NOTIFICATION_ID_VPN`，全部经 [VpnNotificationPublisher](app/src/main/kotlin/top/yukonga/mishka/service/VpnNotificationPublisher.kt) 发布，发布点只有四个（两个 Service 的 `onCreate` + `DynamicNotificationManager` 的动态/静态两条）。**降级阶梯恒为 超级岛 → 实时动态通知 → 标准通知，逐级不跳级，且只由实际展示能力驱动**：超级岛要求 `notification_focus_protocol == 3` 且应用的 `canShowFocus=true`，实时动态要求 `SDK_INT >= 36` 且 `NotificationManagerCompat.canPostPromotedNotifications()`；两项权限查询在 IO 缓存，发布主线程只读快照。那个 `3` 不是逆向出来的魔数，是小米开发者文档定义的 Focus 协议版本，OS1/OS2/OS3 三档里只有 V3 支持超级岛通知模板，「Xiaomi Super Island」「Focus Notification」也都是官方英文名（移植源里的 `Mi Island` / `Focus Island` 是各自现译，不要对齐它们）。**授权方式不参与样式降级**：无特权时仍按展示能力构建并发布，差别只在跳过 XMSF 绕过。`resolveEffectiveStyle` 是阶梯的唯一实现，设置页与发布器都读它；屏幕里的下拉框选中项、圆角动画目标、两个开关的显隐必须同读生效样式，各判各的会出现「下拉框显示标准通知、下面却挂着超级岛开关」。**实时动态通知必须走 `NotificationCompat.Builder`**：Android 36 已有 Live Updates、Status Chip、`setShortCriticalText` 与 promoted-ongoing 基础能力；平台 `Notification.Builder#setRequestPromotedOngoing` 和对应公开 extra 常量到 36.1 才加入，但 androidx.core 会直接写兼容 extra、不调用缺失的平台方法，因此 36.0 也可安全发布且已有真机验证，不能把公开 API 的引入版本误当成展示能力门槛。动态流量开关（`DYNAMIC_NOTIFICATION`）与样式正交，它仍只控制「运行中是否显示实时速率」且仍只在 `TunMode.Vpn` 下生效（理由见 [docs/root-mode.md](docs/root-mode.md) 末条），样式三模式共用。**「正在启动」与「运行中」两阶段的 smallIcon 看着不一样不是 bug**：用 root 抓系统保存的通知对象证实过两次提交的都是 `drawable/ic_launcher_foreground`、都无 largeIcon，差异来自 HyperOS 对首次 `startForeground()` 发布的实时活动做的应用图标兜底与入场动画，`notify()` 更新后 SystemUI 重新绑定才显示真正的单色小图标——不要为此加图标分支。
+
+**超级岛绕过的会话必须常驻，且只在已热时才走主线程**：绕过靠 [SuperIslandBypass](app/src/main/kotlin/top/yukonga/mishka/service/SuperIslandBypass.kt) 在发通知前后开关 XMSF（`com.xiaomi.xmsf`）的 UID 网络，通知本身始终由应用进程用普通通知 API 发布，特权只包在外面。六条硬约束：① **`runWindowIfWarm` 只在会话已建立时同步开窗**，冷会话必须返回 false 交调用方普通发布、再由 IO 上补一次带窗口的同内容发布——`app_process` 的握手（`NewProcessReceiver.start`）在调用线程上阻塞等一条只有主线程能投递的广播，在主线程 `runBlocking` 里触发它就是坐等 15 秒 ANR。② **root ownership 必须由 `RootProcessSession` 长期持有**（`warmUp` + `handOffToService`）：`ProcessHookRecycler.delayDuration = 0`，不持有的话每次 `openSession`/`close` 都连带回收 app_process，1 Hz 的动态通知会退化成每秒 fork 一个 `su`。③ **释放受代次门控**：`release()` 同步捕获代次、比对后才清会话并放 handle，XMSF 恢复则无条件执行——漏了代次，「停止后立刻启动」会让旧的释放把新建立的 handle 抽走，留下「会话标记为热但 handle 已死」，下一条前台通知照样落回 ① 的 15 秒。④ **每次成功 block 都有独立 window token**：旧窗口的 restore 只能关闭自己的 session，只有 active token 能解除 deny；`release()` 才能 force restore active window。⑤ **OEM_DENY_3 的原始 enabled 状态必须随窗口保存并恢复**，UID deny 失败也要回滚临时 enable，不能把整条 OEM chain 永久打开。⑥ **进程死亡恢复标志按服务会话持久化一次**：首次 block 前同步落盘，正常 release 确认恢复后清除；Application 初始化与下一次 block 前都先做幂等恢复，不能让 125 ms 内的 kill 把 XMSF 永久留在 deny。**125 ms 窗口是实测定值不是旋钮**，竞态根因在发布结构（首条通知本身就要带 Focus 参数，不能先发标准再同 ID 覆盖），加时长掩盖不了。绕过失败按 30 秒冷却重试——Shizuku binder 冷启动异步送达、su 授权可能慢一步，一次失败就永久关闭绕过是错的；没有冷却则每秒弹一次授权框。发布走 `Channel.CONFLATED` + 单消费者，同 ID 覆盖语义下丢积压中间帧是正确的。**恢复必须沿用断网时的那个会话**：125 ms 窗口内用户切了授权方式的话，按「当前授权方式」重新选会话等于拿一个从没断过网的会话去恢复，XMSF 会一直断着。断网调用本身包在 `runBlocking(Dispatchers.IO)` 里——隐藏网络接口在主线程直调抛 `NetworkOnMainThreadException`，必须让 Binder 调用落到 IO 线程。
+
+**XMSF 恢复日志是本设备事务状态，绝不进入备份**：使用 `noBackupFilesDir` 下的 `AtomicFile`，不能放在普通 SharedPreferences（默认会被 Auto Backup / D2D 迁移）。旧 preference marker 只在成功迁入 AtomicFile 后删除。服务会话内不按 1 Hz 窗口反复写盘；仅在没有 active window、且本次观察到的 chain baseline 或 authorizer 与日志不同时，block 前同步更新。
+
+**Root 探测按需触发，不在冷启动跑**：`DeviceCapabilityProviderImpl` 的 `init{}` 只挂 Shizuku 的两个 listener，`su -c ksud/magisk/apd` 三连探测只由通知设置页与绕过会话建立触发——它对没用这个功能的用户是纯粹的启动成本，Magisk 设备上还会每次开 app 弹一次。探测的 `waitFor` 必须带超时（对齐 `RootHelper.hasRootAccess` 的 3 秒 + `destroyForcibly`），裸 `waitFor()` 在 su 挂起时会永久占住 IO 线程。隐藏 API 走 `MishkaApplication.onCreate` 开头的全局 `HiddenApiBypass.addHiddenApiExemptions("")`——`IConnectivityManager.setFirewallChainEnabled` 被策略拦成的 `NoSuchMethodError` 与「设备 framework 没有该方法」在栈上无法区分，单点放行不够用。另两条构建/清单层面的静默失败：**`app-process` 的 `commons-cli` 依赖不能省**（`NewProcessReceiver` 传的是 `--package=<value>` 形式，换成只认 `--package <value>` 的手写解析器会让 root 子进程启动即退出）；**`rikka.shizuku.ShizukuProvider` 的 `<provider>` 必须写在 `<application>` 元素内部**，追加到 `</manifest>` 之后照样构建成功，但 provider 从不注册、Shizuku 永远探测为「未运行」。
 
 **ProfileWorker 收尾按 startId**：每件任务完成时 `stopSelfResult(自己的 startId)`——有更新的 start 已投递时它返回 false，那条请求由它自己的任务再试。**不能改回「延时 drain 队列 + stopSelf()」**：`poll()` 返回 null 与停止生效之间到达的 `ACTION_UPDATE_PROFILE` 入队后无人 join，`onDestroy` 的 `scope.cancel()` 直接把它掐掉，更新静默失败。计数用 `AtomicInteger`（onStartCommand 在主线程、完成回调在 IO 协程）。
 

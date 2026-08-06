@@ -573,4 +573,25 @@
     <string name="meta_age_copy_secret">Копировать секретный ключ</string>
     <string name="meta_age_copy_public">Копировать открытый ключ</string>
     <string name="meta_age_keygen_failed">Не удалось сгенерировать пару ключей</string>
+    <string name="notification_settings">Настройки уведомлений</string>
+    <string name="notification_settings_summary">Авторизация, стиль и динамические уведомления</string>
+    <string name="notification_short_starting">Запуск</string>
+    <string name="notification_authorizer_none">Без авторизации</string>
+    <string name="notification_authorizer_shizuku">Shizuku</string>
+    <string name="notification_authorizer_root">Root</string>
+    <string name="notification_authorizer_root_with_manager">Root (%1$s)</string>
+    <string name="notification_shizuku_not_running_snackbar">Shizuku не запущен. Запустите его и повторите попытку.</string>
+    <string name="notification_shizuku_not_granted_snackbar">Разрешение Shizuku не предоставлено.</string>
+    <string name="notification_style">Стиль уведомлений</string>
+    <string name="notification_style_standard">Стандартное уведомление</string>
+    <string name="notification_style_live_activity">Уведомление в реальном времени</string>
+    <string name="notification_style_mi_island">Суперостров Xiaomi</string>
+    <string name="notification_style_unsupported_desc">Поддерживается только стандартный стиль уведомлений</string>
+    <string name="notification_style_permission_required_desc">Расширенные уведомления отключены в системных настройках</string>
+    <string name="notification_section_preferences">Параметры</string>
+    <string name="notification_mi_island_bypass">Обход ограничения Суперострова</string>
+    <string name="notification_mi_island_bypass_summary">Обход системной проверки подписи для Суперострова</string>
+    <string name="notification_mi_island_bypass_summary_no_privilege">Требуется авторизация через Shizuku или Root</string>
+    <string name="notification_mi_island_outer_glow">Внешнее свечение</string>
+    <string name="notification_mi_island_outer_glow_summary">Добавить свечение по краям Суперострова, как у системных приложений</string>
 </resources>
