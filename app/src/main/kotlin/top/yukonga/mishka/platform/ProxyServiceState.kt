@@ -16,9 +16,8 @@ object ProxyServiceBridge {
     private val _state = MutableStateFlow(ProxyServiceStatus())
     val state: StateFlow<ProxyServiceStatus> = _state.asStateFlow()
 
-    // 通知刷新事件，设置页切换动态通知时触发
-    private val _notificationRefresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val notificationRefresh: SharedFlow<Unit> = _notificationRefresh.asSharedFlow()
+    private val _notificationRefresh = MutableSharedFlow<NotificationRefreshReason>(extraBufferCapacity = 8)
+    val notificationRefresh: SharedFlow<NotificationRefreshReason> = _notificationRefresh.asSharedFlow()
 
     fun updateState(status: ProxyServiceStatus) {
         _state.value = status
@@ -44,7 +43,14 @@ object ProxyServiceBridge {
         }
     }
 
-    fun requestNotificationRefresh() {
-        _notificationRefresh.tryEmit(Unit)
+    fun requestNotificationRefresh(reason: NotificationRefreshReason = NotificationRefreshReason.Content) {
+        _notificationRefresh.tryEmit(reason)
     }
+}
+
+enum class NotificationRefreshReason {
+    Content,
+    Settings,
+    Capability,
+    Retry,
 }

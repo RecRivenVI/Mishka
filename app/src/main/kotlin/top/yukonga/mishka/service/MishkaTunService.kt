@@ -23,6 +23,7 @@ import top.yukonga.mishka.data.database.getAppDatabase
 import top.yukonga.mishka.data.repository.OverrideJsonStore
 import top.yukonga.mishka.domain.model.resolveExternalController
 import top.yukonga.mishka.platform.PlatformStorage
+import top.yukonga.mishka.platform.NotificationRefreshReason
 import top.yukonga.mishka.platform.ProxyServiceBridge
 import top.yukonga.mishka.platform.ProxyServiceController
 import top.yukonga.mishka.platform.ProxyServiceStatus
@@ -40,8 +41,9 @@ class MishkaTunService : VpnService() {
     // 跑在 Default 上会长时间占住数个 CPU 池线程，与 Compose 重组、导入管线抢同一批核
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val runner by lazy { MihomoRunner(this) }
+    private val notificationPublisher: VpnNotificationPublisher by inject()
     private val dynamicNotification by lazy {
-        DynamicNotificationManager(this, scope, MishkaApplication.instance.connectionManager)
+        DynamicNotificationManager(scope, MishkaApplication.instance.connectionManager, notificationPublisher)
     }
 
     // 取 Koin 单例而非自建：store 的内存值是权威值，自建实例读不到 UI 侧刚落的设置
@@ -60,10 +62,7 @@ class MishkaTunService : VpnService() {
         super.onCreate()
         NotificationHelper.createChannels(this)
         try {
-            startForeground(
-                NotificationHelper.NOTIFICATION_ID_VPN,
-                NotificationHelper.buildLoadingNotification(this),
-            )
+            notificationPublisher.startForeground(this, VpnNotificationContent.Loading)
         } catch (e: Exception) {
             Log.e(TAG, "startForeground failed", e)
             ProxyServiceBridge.updateState(
@@ -78,7 +77,8 @@ class MishkaTunService : VpnService() {
         }
         // 监听动态通知设置变化，实时切换通知样式
         notificationRefreshJob = scope.launch {
-            ProxyServiceBridge.notificationRefresh.collect {
+            ProxyServiceBridge.notificationRefresh.collect { reason ->
+                notificationPublisher.onRefreshRequested(reason == NotificationRefreshReason.Settings)
                 val state = ProxyServiceBridge.state.value
                 if (state.state == ProxyState.Running && state.tunMode == TunMode.Vpn) {
                     dynamicNotification.stop()
@@ -355,7 +355,7 @@ class MishkaTunService : VpnService() {
                 )
             )
 
-            dynamicNotification.startOrFallbackStatic(storage)
+            dynamicNotification.startOrFallbackStatic(storage, TunMode.Vpn)
             // 记录运行状态，用于开机自启判断
             PlatformStorage(this@MishkaTunService).putString(StorageKeys.SERVICE_WAS_RUNNING, "true")
             Log.i(TAG, "Proxy running, fd=$fd")
@@ -449,6 +449,7 @@ class MishkaTunService : VpnService() {
         notificationRefreshJob?.cancel()
         monitorJob?.cancel()
         dynamicNotification.stop()
+        notificationPublisher.releaseService(this)
         runner.stop()
         closeTunFd()
         PlatformStorage(this).putString(StorageKeys.SERVICE_WAS_RUNNING, "false")

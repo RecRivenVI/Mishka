@@ -43,6 +43,7 @@
 - 宽屏适配（NavigationRail 侧边栏）
 - 内置 YAML 配置编辑器（[scripta](https://github.com/YuKongA/scripta)）
 - 实时流量、连接、日志、DNS 查询、Provider 管理
+- **三种通知样式** —— 标准通知 / Android 实时动态通知（Live Update，需 Android 16）/ **小米超级岛**（HyperOS Focus 协议 V3）；不支持时逐级自动降级，超级岛可选配 Root 或 Shizuku 解除系统限制
 - 动态流量通知（VPN 模式）+ Quick Settings 磁贴一键启停
 - **Wi-Fi 自动切换** —— 匹配指定 SSID 时自动停止代理或切换 Direct 模式
 - 开机自启、隐藏最近任务卡片等实用开关
@@ -85,6 +86,10 @@ git submodule update --init --recursive
 - [miuix](https://github.com/miuix-kotlin-multiplatform/miuix) —— UI 组件库
 - [sparkle](https://github.com/xishang0128/sparkle) / [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid) —— 实现参考
 - [scripta](https://github.com/YuKongA/scripta) —— 代码编辑器
+- [InstallerX Revived](https://github.com/wxxsfxyzm/InstallerX-Revived) —— 实时动态通知与超级岛 Focus V3 payload 的实现参考；`app-process/` 取自其上游 [InstallerX](https://github.com/iamr0s/InstallerX) 的 `com.rosan.app_process`（LGPL-3.0，许可证随模块保留）
+- [IslandRecorder](https://github.com/wxxsfxyzm/IslandRecorder) —— Root / Shizuku 授权链路与 XMSF 网络控制的实现参考
+- `com.xzakota.hyper.notification:focus-api` —— HyperOS Focus 通知协议 DSL
+- [Shizuku](https://github.com/RikkaApps/Shizuku) / [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) —— 免 Root 特权通道与隐藏 API 放行
 
 ## 许可证
 

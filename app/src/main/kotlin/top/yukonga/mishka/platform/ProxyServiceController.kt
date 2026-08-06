@@ -39,7 +39,9 @@ data class ProxyServiceStatus(
     val errorNotified: Boolean = false,
 )
 
-class ProxyServiceController(private val context: Context) {
+class ProxyServiceController(
+    private val context: Context,
+) {
 
     private val storage by lazy { PlatformStorage(context) }
 
@@ -61,7 +63,7 @@ class ProxyServiceController(private val context: Context) {
         val intent = buildServiceIntent(mode, Op.Start).apply {
             putExtra(EXTRA_SUBSCRIPTION_ID, id)
         }
-        context.startForegroundService(intent)
+        startForegroundService(intent, "start", mode)
     }
 
     fun restart(subscriptionId: String? = null) {
@@ -149,7 +151,25 @@ class ProxyServiceController(private val context: Context) {
             putExtra(EXTRA_SUBSCRIPTION_ID, id)
             putExtra(MishkaRootService.EXTRA_ATTACH_ONLY, true)
         }
-        context.startForegroundService(intent)
+        startForegroundService(intent, "reattach", mode)
+    }
+
+    private fun startForegroundService(intent: Intent, what: String, mode: TunMode) {
+        runCatching { context.startForegroundService(intent) }
+            .onFailure { error ->
+                Log.e(TAG, "Failed to $what proxy foreground service", error)
+                storage.putString(StorageKeys.SERVICE_WAS_RUNNING, "false")
+                ProxyServiceBridge.updateState(
+                    ProxyServiceStatus(
+                        state = ProxyState.Error,
+                        errorMessage = context.getString(
+                            R.string.error_foreground_failed,
+                            error.message ?: error.javaClass.simpleName,
+                        ),
+                        tunMode = mode,
+                    )
+                )
+            }
     }
 
     /**
