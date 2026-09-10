@@ -573,4 +573,6 @@
     <string name="meta_age_copy_secret">Копировать секретный ключ</string>
     <string name="meta_age_copy_public">Копировать открытый ключ</string>
     <string name="meta_age_keygen_failed">Не удалось сгенерировать пару ключей</string>
+    <string name="subscription_default_group">По умолчанию</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import top.yukonga.mishka.domain.model.ProfileType
 import top.yukonga.mishka.R
 import top.yukonga.mishka.ui.component.AdaptiveTopAppBar
 import top.yukonga.mishka.ui.component.blur.BlurredBar
@@ -59,6 +60,7 @@ fun SubscriptionAddUrlScreen(
     initialUrl: String = "",
     initialName: String = "",
     initialIntervalMinutes: Long = 0,
+    ninja: Boolean = false,
     onBack: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
@@ -66,7 +68,7 @@ fun SubscriptionAddUrlScreen(
     val scrollBehavior = MiuixScrollBehavior()
     var inputName by remember { mutableStateOf(initialName) }
     var inputUrl by remember { mutableStateOf(initialUrl) }
-    var userAgent by remember { mutableStateOf("") }
+    var userAgent by remember { mutableStateOf(if (ninja) ProfileType.NINJA_USER_AGENT else "") }
     var ageSecretKey by remember { mutableStateOf("") }
     var intervalMinutes by remember {
         mutableStateOf(if (initialIntervalMinutes > 0) initialIntervalMinutes.toString() else "")
@@ -173,6 +175,7 @@ fun SubscriptionAddUrlScreen(
             item(key = "user_agent_field") {
                 TextField(
                     value = userAgent,
+                    enabled = !ninja,
                     onValueChange = { userAgent = it },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -182,20 +185,22 @@ fun SubscriptionAddUrlScreen(
                     useLabelAsPlaceholder = true,
                 )
             }
-            item(key = "age_secret_key_title") {
-                SmallTitle(text = stringResource(R.string.subscription_age_secret_key))
-            }
-            item(key = "age_secret_key_field") {
-                TextField(
-                    value = ageSecretKey,
-                    onValueChange = { ageSecretKey = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 6.dp),
-                    label = stringResource(R.string.subscription_age_secret_key_placeholder),
-                    useLabelAsPlaceholder = true,
-                )
+            if (!ninja) {
+                item(key = "age_secret_key_title") {
+                    SmallTitle(text = stringResource(R.string.subscription_age_secret_key))
+                }
+                item(key = "age_secret_key_field") {
+                    TextField(
+                        value = ageSecretKey,
+                        onValueChange = { ageSecretKey = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                            .padding(bottom = 6.dp),
+                        label = stringResource(R.string.subscription_age_secret_key_placeholder),
+                        useLabelAsPlaceholder = true,
+                    )
+                }
             }
             item(key = "interval_field") {
                 SmallTitle(text = stringResource(R.string.subscription_auto_update))
@@ -217,10 +222,11 @@ fun SubscriptionAddUrlScreen(
                         val intervalMs = (intervalMinutes.toLongOrNull() ?: 0) * 60000
                         viewModel.addSubscription(
                             name = inputName.trim(),
+                            ninja = ninja,
                             url = inputUrl,
                             interval = intervalMs,
-                            userAgent = userAgent.trim(),
-                            ageSecretKey = ageSecretKey.trim(),
+                            userAgent = if (ninja) ProfileType.NINJA_USER_AGENT else userAgent.trim(),
+                            ageSecretKey = if (ninja) "" else ageSecretKey.trim(),
                             onComplete = onSaved,
                         )
                     },

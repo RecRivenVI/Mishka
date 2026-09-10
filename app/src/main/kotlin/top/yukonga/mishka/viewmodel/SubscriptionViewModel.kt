@@ -109,6 +109,7 @@ class SubscriptionViewModel(
      */
     fun addSubscription(
         name: String,
+        ninja: Boolean = false,
         url: String,
         interval: Long = 0,
         userAgent: String = "",
@@ -117,7 +118,7 @@ class SubscriptionViewModel(
     ) {
         hideAddDialog()
         runPipeline(ProfileOperation.Import, errorKey = R.string.error_import_failed) {
-            val sub = repository.create(ProfileType.Url, name, url, interval, userAgent, ageSecretKey)
+            val sub = repository.create(if (ninja) ProfileType.Ninja else ProfileType.Url, name, url, interval, userAgent, ageSecretKey)
             pendingOnFailure(sub.id) {
                 processor.apply(sub.id, ::reportProgress)
             }

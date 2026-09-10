@@ -60,7 +60,7 @@ fun SubscriptionEditScreen(
 
     var name by rememberSaveable(uuid) { mutableStateOf(subscription?.name ?: "") }
     var url by rememberSaveable(uuid) { mutableStateOf(subscription?.url ?: "") }
-    var userAgent by rememberSaveable(uuid) { mutableStateOf(subscription?.userAgent ?: "") }
+    var userAgent by rememberSaveable(uuid) { mutableStateOf(subscription?.let { it.type.effectiveUserAgent(it.userAgent) } ?: "") }
     var ageSecretKey by rememberSaveable(uuid) { mutableStateOf(subscription?.ageSecretKey ?: "") }
     var intervalMinutes by rememberSaveable(uuid) {
         mutableStateOf(
@@ -144,6 +144,7 @@ fun SubscriptionEditScreen(
                     SmallTitle(text = stringResource(R.string.subscription_user_agent))
                     TextField(
                         value = userAgent,
+                        enabled = subscription.type != ProfileType.Ninja,
                         onValueChange = { userAgent = it },
                         label = stringResource(R.string.subscription_user_agent_placeholder),
                         useLabelAsPlaceholder = true,

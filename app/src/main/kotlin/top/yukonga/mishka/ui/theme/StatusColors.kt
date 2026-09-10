@@ -11,6 +11,10 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  */
 object StatusColors {
 
+    val ninja: Color
+        @Composable @ReadOnlyComposable
+        get() = if (LocalAppDarkMode.current) Color(0xFFD0BCFF) else Color(0xFF6750A4)
+
     /** 中性灰：未测试 / 未知态 */
     val neutral: Color
         @Composable @ReadOnlyComposable

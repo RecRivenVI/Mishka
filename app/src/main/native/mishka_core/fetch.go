@@ -6,6 +6,7 @@ package main
 import "C"
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -27,6 +28,7 @@ import (
 	"github.com/metacubex/mihomo/common/utils"
 	clashHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/config"
+	ninjaSubscription "github.com/metacubex/mihomo/transport/ninja/subscription"
 )
 
 const fetchTimeout = 60 * time.Second
@@ -61,6 +63,7 @@ func mishkaFetchAndValid(
 	force C.int,
 	cHttpProxy *C.char,
 	cUserAgent *C.char,
+	ninjaMode C.int,
 	token C.int,
 ) *C.char {
 	return guardString(func() string {
@@ -74,7 +77,7 @@ func mishkaFetchAndValid(
 		defer cancelRegistry.Delete(int32(token))
 		defer progressStore.Delete(int32(token))
 
-		result, err := runFetchAndValid(ctx, int32(token), workDir, rawURL, force != 0, httpProxy, userAgent)
+		result, err := runFetchAndValid(ctx, int32(token), workDir, rawURL, force != 0, httpProxy, userAgent, ninjaMode != 0)
 		if err != nil {
 			return "error: " + err.Error()
 		}
@@ -90,6 +93,7 @@ func runFetchAndValid(
 	force bool,
 	httpProxy string,
 	userAgent string,
+	ninja bool,
 ) (*FetchResult, error) {
 	if err := os.MkdirAll(workDir, 0700); err != nil {
 		return nil, fmt.Errorf("create workDir: %w", err)
@@ -98,6 +102,9 @@ func runFetchAndValid(
 	effectiveUA := strings.TrimSpace(userAgent)
 	if effectiveUA == "" {
 		effectiveUA = currentUserAgent()
+	}
+	if ninja {
+		effectiveUA = ninjaSubscription.UserAgent
 	}
 
 	// mihomo HTTP / GeoIP downloadToPath 读 env；processLock 串行保证 set/unset 不被并发污染。
@@ -125,7 +132,7 @@ func runFetchAndValid(
 			Progress:    -1,
 			MaxProgress: -1,
 		})
-		if err := fetchURL(ctx, u, configPath, result, effectiveUA); err != nil {
+		if err := fetchURL(ctx, u, configPath, result, effectiveUA, ninja); err != nil {
 			return nil, err
 		}
 	}
@@ -174,7 +181,7 @@ func setProgress(token int32, p FetchProgress) {
 	}
 }
 
-func fetchURL(ctx context.Context, u *url.URL, dest string, result *FetchResult, userAgent string) error {
+func fetchURL(ctx context.Context, u *url.URL, dest string, result *FetchResult, userAgent string, ninja bool) error {
 	scheme := strings.ToLower(u.Scheme)
 	if scheme != "http" && scheme != "https" {
 		return fmt.Errorf("unsupported scheme %s", u.Scheme)
@@ -200,7 +207,19 @@ func fetchURL(ctx context.Context, u *url.URL, dest string, result *FetchResult,
 	if err := os.MkdirAll(P.Dir(dest), 0700); err != nil {
 		return err
 	}
-	n, err := writeFileAtomic(dest, resp.Body)
+	var content io.Reader = resp.Body
+	if ninja {
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, ninjaSubscription.MaxBytes+1))
+		if readErr != nil {
+			return readErr
+		}
+		processed, processErr := ninjaSubscription.Process(body, resp.Header.Get("subscription-pass-info"))
+		if processErr != nil {
+			return processErr
+		}
+		content = bytes.NewReader(processed)
+	}
+	n, err := writeFileAtomic(dest, content)
 	if err != nil {
 		return err
 	}
@@ -212,7 +231,7 @@ func fetchURL(ctx context.Context, u *url.URL, dest string, result *FetchResult,
 }
 
 // Content-Disposition 的 filename 常携带订阅名（subconverter / 机场面板惯例）。
-// mime.ParseMediaType 原生解码 RFC 5987 的 filename*=UTF-8''<name> 扩展参数。
+// mime.ParseMediaType 原生解码 RFC 5987 的 filename*=UTF-8”<name> 扩展参数。
 func dispositionFileName(header string) string {
 	if header == "" {
 		return ""

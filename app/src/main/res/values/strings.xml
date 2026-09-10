@@ -573,4 +573,6 @@
     <string name="meta_age_copy_secret">Copy Secret Key</string>
     <string name="meta_age_copy_public">Copy Public Key</string>
     <string name="meta_age_keygen_failed">Failed to generate key pair</string>
+    <string name="subscription_default_group">Default</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>

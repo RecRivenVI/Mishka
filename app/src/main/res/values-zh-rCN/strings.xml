@@ -571,4 +571,6 @@
     <string name="meta_age_copy_secret">复制私钥</string>
     <string name="meta_age_copy_public">复制公钥</string>
     <string name="meta_age_keygen_failed">生成密钥对失败</string>
+    <string name="subscription_default_group">默认</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>
