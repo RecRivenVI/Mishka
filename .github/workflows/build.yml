@@ -25,6 +25,8 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+          # Ninja 集成引用私有 mihomo；secret 未配置时仍可构建只含公开子模块的分支。
+          token: ${{ secrets.MIHOMO_REPO_TOKEN || github.token }}
 
       - name: Set up JDK
         uses: actions/setup-java@v5

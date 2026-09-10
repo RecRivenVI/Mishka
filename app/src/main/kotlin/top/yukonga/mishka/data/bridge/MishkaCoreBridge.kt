@@ -61,6 +61,7 @@ object MishkaCoreBridge {
         httpProxy: String?,
         userAgent: String,
         ageSecretKey: String,
+        ninja: Boolean = false,
         onProgress: suspend (CoreFetchProgress) -> Unit,
     ): CoreFetchResult = coroutineScope {
         val token = tokenSeq.getAndIncrement()
@@ -81,7 +82,7 @@ object MishkaCoreBridge {
                 // age 全局密钥进程级共享：fetchAndValid 由 processLock 串行，fetch 前设置、后清空。
                 nativeSetAgeSecretKey(ageSecretKey)
                 try {
-                    nativeFetchAndValid(workDir, url, force, httpProxy, userAgent, token)
+                    nativeFetchAndValid(workDir, url, force, httpProxy, userAgent, ninja, token)
                 } finally {
                     nativeDone.set(true)
                     nativeSetAgeSecretKey("")
@@ -152,6 +153,7 @@ object MishkaCoreBridge {
         force: Boolean,
         httpProxy: String?,
         userAgent: String,
+        ninja: Boolean,
         token: Int,
     ): String?
 

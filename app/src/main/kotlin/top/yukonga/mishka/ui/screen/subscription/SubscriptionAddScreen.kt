@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import top.yukonga.mishka.ui.component.CardItem
+import top.yukonga.mishka.ui.component.groupedCardItems
+import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.mishka.R
 import top.yukonga.mishka.ui.component.AdaptiveTopAppBar
 import top.yukonga.mishka.ui.component.blur.BlurredBar
@@ -49,6 +52,7 @@ fun SubscriptionAddScreen(
     onBack: () -> Unit = {},
     onPickFile: () -> Unit = {},
     onNavigateUrl: () -> Unit = {},
+    onNavigateNinjaUrl: () -> Unit = {},
     onScanQR: (() -> Unit)? = null,
 ) {
     val scrollBehavior = MiuixScrollBehavior()
@@ -95,35 +99,50 @@ fun SubscriptionAddScreen(
                 top = innerPadding.calculateTopPadding(),
             ),
         ) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .padding(top = 12.dp),
-                ) {
-                    ArrowPreference(
-                        title = stringResource(R.string.subscription_file),
-                        summary = stringResource(R.string.subscription_file_summary),
-                        enabled = !uiState.isLoading,
-                        onClick = onPickFile,
-                    )
-                    ArrowPreference(
-                        title = stringResource(R.string.subscription_url),
-                        summary = stringResource(R.string.subscription_url_summary),
-                        enabled = !uiState.isLoading,
-                        onClick = onNavigateUrl,
-                    )
-                    if (onScanQR != null) {
+            item(key = "default_title") { SmallTitle(text = stringResource(R.string.subscription_default_group)) }
+            groupedCardItems(
+                keyPrefix = "default_import",
+                outerBottomPadding = 12.dp,
+                items = buildList {
+                    add(CardItem("file") {
+                        ArrowPreference(
+                            title = stringResource(R.string.subscription_file),
+                            summary = stringResource(R.string.subscription_file_summary),
+                            enabled = !uiState.isLoading,
+                            onClick = onPickFile,
+                        )
+                    })
+                    add(CardItem("url") {
+                        ArrowPreference(
+                            title = stringResource(R.string.subscription_url),
+                            summary = stringResource(R.string.subscription_url_summary),
+                            enabled = !uiState.isLoading,
+                            onClick = onNavigateUrl,
+                        )
+                    })
+                    if (onScanQR != null) add(CardItem("qr") {
                         ArrowPreference(
                             title = stringResource(R.string.subscription_qr),
                             summary = stringResource(R.string.subscription_qr_summary),
                             enabled = !uiState.isLoading,
                             onClick = onScanQR,
                         )
-                    }
-                }
-            }
+                    })
+                },
+            )
+            item(key = "ninja_title") { SmallTitle(text = stringResource(R.string.subscription_ninja_group)) }
+            groupedCardItems(
+                keyPrefix = "ninja_import",
+                outerBottomPadding = 12.dp,
+                items = listOf(CardItem("url") {
+                    ArrowPreference(
+                        title = stringResource(R.string.subscription_url),
+                        summary = stringResource(R.string.subscription_url_summary),
+                        enabled = !uiState.isLoading,
+                        onClick = onNavigateNinjaUrl,
+                    )
+                }),
+            )
             if (uiState.error.isNotEmpty()) {
                 item(key = "error") {
                     Card(
