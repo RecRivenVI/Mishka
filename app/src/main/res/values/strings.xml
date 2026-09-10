@@ -598,4 +598,6 @@
     <string name="notification_mi_island_bypass_summary_no_privilege">Requires Root authorization for crash-safe recovery</string>
     <string name="notification_mi_island_outer_glow">Outer Glow</string>
     <string name="notification_mi_island_outer_glow_summary">Add a system-app-style glow to the Super Island edge</string>
+    <string name="subscription_default_group">Default</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>

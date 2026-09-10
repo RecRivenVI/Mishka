@@ -136,7 +136,7 @@ class SubscriptionRepositoryImpl(
         ageSecretKey: String,
     ): Subscription = profileLock.withLock {
         val uuid = Uuid.random().toString()
-        val trimmedUA = userAgent.trim()
+        val trimmedUA = type.effectiveUserAgent(userAgent)
         val trimmedAge = ageSecretKey.trim()
         val pending = PendingEntity(
             uuid = uuid,
@@ -185,7 +185,7 @@ class SubscriptionRepositoryImpl(
                     name = name,
                     type = imported.type,
                     source = source,
-                    userAgent = trimmedUA,
+                    userAgent = imported.type.effectiveUserAgent(trimmedUA),
                     ageSecretKey = trimmedAge,
                     interval = interval,
                     createdAt = imported.createdAt,
@@ -196,7 +196,7 @@ class SubscriptionRepositoryImpl(
                 existing.copy(
                     name = name,
                     source = source,
-                    userAgent = trimmedUA,
+                    userAgent = existing.type.effectiveUserAgent(trimmedUA),
                     ageSecretKey = trimmedAge,
                     interval = interval,
                     upload = 0,
@@ -266,7 +266,7 @@ class SubscriptionRepositoryImpl(
     override suspend fun validatePendingForCommit(uuid: String): Boolean {
         val pending = pendingDao.queryByUUID(uuid) ?: return false
         pending.enforceFieldValid()
-        return pending.type == ProfileType.Url && pending.source.isNotBlank()
+        return pending.type.isRemote && pending.source.isNotBlank()
     }
 
     override suspend fun commitPendingProfile(uuid: String) = profileLock.withLock {
@@ -418,8 +418,8 @@ sealed class ImportError(message: String) : Exception(message) {
  * URL 必须 http(s)、interval 0 或 ≥ 15min。
  */
 fun PendingEntity.enforceFieldValid() {
-    if (name.isBlank() && type != ProfileType.Url) throw ImportError.InvalidName()
-    if (type == ProfileType.Url) {
+    if (name.isBlank() && !type.isRemote) throw ImportError.InvalidName()
+    if (type.isRemote) {
         val lower = source.lowercase()
         if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
             throw ImportError.InvalidScheme(source)

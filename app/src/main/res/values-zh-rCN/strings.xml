@@ -596,4 +596,6 @@
     <string name="notification_mi_island_bypass_summary_no_privilege">需要 Root 授权以保证异常退出后恢复网络</string>
     <string name="notification_mi_island_outer_glow">外发光效果</string>
     <string name="notification_mi_island_outer_glow_summary">为超级岛边缘添加类似系统应用的外发光特效</string>
+    <string name="subscription_default_group">默认</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>

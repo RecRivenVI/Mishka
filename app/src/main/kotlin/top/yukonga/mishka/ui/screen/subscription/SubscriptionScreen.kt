@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import top.yukonga.mishka.R
+import top.yukonga.mishka.domain.model.ProfileType
 import top.yukonga.mishka.domain.model.Subscription
 import top.yukonga.mishka.ui.component.AdaptiveTopAppBar
 import top.yukonga.mishka.ui.component.blur.BlurredBar
@@ -248,13 +249,34 @@ private fun SubscriptionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = subscription.name.ifBlank { stringResource(R.string.subscription_config) },
+            Row(
                 modifier = Modifier.weight(1f),
-                fontSize = 17.sp,
-                fontWeight = FontWeight(550),
-                color = MiuixTheme.colorScheme.onSurface,
-            )
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = subscription.name.ifBlank { stringResource(R.string.subscription_config) },
+                    modifier = Modifier.weight(1f, fill = false),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight(550),
+                    color = MiuixTheme.colorScheme.onSurface,
+                )
+                if (subscription.type == ProfileType.Ninja) {
+                    val ninjaColor = StatusColors.ninja
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.subscription_ninja_group),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight(750),
+                        color = ninjaColor,
+                        modifier = Modifier
+                            .squircleBackground(ninjaColor.copy(alpha = 0.15f), 6.dp)
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                    if (subscription.isActive) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                }
+            }
             if (subscription.isActive) {
                 val activeColor = StatusColors.healthy
                 Text(

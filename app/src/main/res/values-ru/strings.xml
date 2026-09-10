@@ -598,4 +598,6 @@
     <string name="notification_mi_island_bypass_summary_no_privilege">Для безопасного восстановления после сбоя требуется Root</string>
     <string name="notification_mi_island_outer_glow">Внешнее свечение</string>
     <string name="notification_mi_island_outer_glow_summary">Добавить свечение по краям Суперострова, как у системных приложений</string>
+    <string name="subscription_default_group">По умолчанию</string>
+    <string name="subscription_ninja_group">Ninja</string>
 </resources>
