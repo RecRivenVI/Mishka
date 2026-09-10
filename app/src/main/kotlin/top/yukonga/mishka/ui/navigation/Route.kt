@@ -23,6 +23,7 @@ sealed interface Route : NavKey {
         val initialUrl: String = "",
         val initialName: String = "",
         val initialIntervalMinutes: Long = 0,
+        val ninja: Boolean = false,
     ) : Route
 
     @Serializable

@@ -298,6 +298,7 @@ fun AppNavigation(
                         }
                     },
                     onNavigateUrl = { navigator.push(Route.SubscriptionAddUrl()) },
+                    onNavigateNinjaUrl = { navigator.push(Route.SubscriptionAddUrl(ninja = true)) },
                     onScanQR = if (onScanQR != null) {
                         {
                             onScanQR { url ->
@@ -316,6 +317,7 @@ fun AppNavigation(
                         initialUrl = route.initialUrl,
                         initialName = route.initialName,
                         initialIntervalMinutes = route.initialIntervalMinutes,
+                        ninja = route.ninja,
                         onBack = { navigator.pop() },
                         onSaved = { navigator.popUntil { key -> key is Route.Main } },
                     )

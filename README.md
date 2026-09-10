@@ -79,6 +79,8 @@ git submodule update --init --recursive
 
 > `mihomo` 通过 git submodule 引入 [YuKongA/mihomo](https://github.com/YuKongA/mihomo) 的 `Mishka` 分支（含 5 个针对 Android fd/TUN 的 patch）。Gradle 会自动驱动 Go 交叉编译，产物位于 `app/src/main/jniLibs/<ABI>/`
 
+> 包含 Ninja 集成的分支改用私有 `RecRivenVI/mihomo` 子模块。克隆者需要先配置可读取该仓库的 Git 凭据；GitHub Actions 需要将具备读取权限的 token 保存为 `MIHOMO_REPO_TOKEN` secret。
+
 ## 致谢
 
 - [mihomo](https://github.com/MetaCubeX/mihomo) —— 代理核心

@@ -102,15 +102,16 @@ class ProfileProcessor(
             }
 
             try {
-                val proxyUrl = if (snapshot.type == ProfileType.Url) proxyResolver.resolve() else null
+                val proxyUrl = if (snapshot.type.isRemote) proxyResolver.resolve() else null
 
                 val result = try {
                     MishkaCoreBridge.fetchAndValid(
                         workDir = workDir,
-                        url = if (snapshot.type == ProfileType.Url) snapshot.source else "",
-                        force = snapshot.type == ProfileType.Url,
+                        url = if (snapshot.type.isRemote) snapshot.source else "",
+                        force = snapshot.type.isRemote,
                         httpProxy = proxyUrl,
-                        userAgent = snapshot.userAgent,
+                        userAgent = snapshot.type.effectiveUserAgent(snapshot.userAgent),
+                        ninja = snapshot.type == ProfileType.Ninja,
                         ageSecretKey = snapshot.ageSecretKey,
                         onProgress = { p -> onProgress(mapProgress(p)) },
                     )
@@ -169,7 +170,7 @@ class ProfileProcessor(
      * 用户输入永远优先。
      */
     private fun autoProfileName(snapshot: PendingSnapshot, dispositionName: String): String {
-        if (snapshot.type != ProfileType.Url) return ""
+        if (!snapshot.type.isRemote) return ""
         return dispositionName
             .ifBlank { runCatching { URI(snapshot.source).host.orEmpty() }.getOrDefault("") }
             .ifBlank { defaultProfileName }
