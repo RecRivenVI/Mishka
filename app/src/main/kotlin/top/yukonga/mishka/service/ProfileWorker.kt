@@ -12,6 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import top.yukonga.mishka.BuildConfig
 import top.yukonga.mishka.R
 import top.yukonga.mishka.data.database.getAppDatabase
 import top.yukonga.mishka.data.repository.OverrideJsonStore
@@ -159,7 +160,7 @@ class ProfileWorker : Service() {
 
     companion object {
         private const val TAG = "ProfileWorker"
-        const val ACTION_SCHEDULE_UPDATES = "top.yukonga.mishka.action.SCHEDULE_UPDATES"
-        const val ACTION_UPDATE_PROFILE = "top.yukonga.mishka.action.UPDATE_PROFILE"
+        const val ACTION_SCHEDULE_UPDATES = "${BuildConfig.APPLICATION_ID}.action.SCHEDULE_UPDATES"
+        const val ACTION_UPDATE_PROFILE = "${BuildConfig.APPLICATION_ID}.action.UPDATE_PROFILE"
     }
 }

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import top.yukonga.mishka.BuildConfig
 import kotlin.time.Clock
 
 /**
@@ -37,7 +38,8 @@ class ProfileReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "ProfileReceiver"
-        const val ACTION_PROFILE_REQUEST_UPDATE = "top.yukonga.mishka.action.PROFILE_REQUEST_UPDATE"
+        const val ACTION_PROFILE_REQUEST_UPDATE =
+            "${BuildConfig.APPLICATION_ID}.action.PROFILE_REQUEST_UPDATE"
 
         private fun startProfileWorker(context: Context, action: String, uuid: String? = null) {
             val intent = Intent(context, ProfileWorker::class.java).apply {

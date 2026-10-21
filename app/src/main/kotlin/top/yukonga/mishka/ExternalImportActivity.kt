@@ -48,7 +48,8 @@ class ExternalImportActivity : Activity() {
     }
 
     companion object {
-        const val ACTION_IMPORT_SUBSCRIPTION = "top.yukonga.mishka.action.IMPORT_SUBSCRIPTION"
+        const val ACTION_IMPORT_SUBSCRIPTION =
+            "${BuildConfig.APPLICATION_ID}.action.IMPORT_SUBSCRIPTION"
         const val EXTRA_IMPORT_URL = "import_url"
         const val EXTRA_IMPORT_NAME = "import_name"
         const val EXTRA_IMPORT_INTERVAL_MINUTES = "import_interval_minutes"

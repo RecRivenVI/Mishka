@@ -136,7 +136,7 @@
                 <action android:name="android.intent.action.TIME_SET" />
             </intent-filter>
             <intent-filter>
-                <action android:name="top.yukonga.mishka.action.PROFILE_REQUEST_UPDATE" />
+                <action android:name="${applicationId}.action.PROFILE_REQUEST_UPDATE" />
                 <data android:scheme="uuid" />
             </intent-filter>
         </receiver>

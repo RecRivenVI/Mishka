@@ -91,7 +91,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
     defaultConfig {
-        applicationId = ProjectConfig.PACKAGE_NAME
+        applicationId = ProjectConfig.APPLICATION_ID
         minSdk = ProjectConfig.Android.MIN_SDK
         targetSdk = ProjectConfig.Android.TARGET_SDK
         versionName = ProjectConfig.VERSION_NAME

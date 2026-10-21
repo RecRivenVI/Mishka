@@ -10,11 +10,12 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import top.yukonga.mishka.BuildConfig
 
 object WifiPolicyIntents {
-    const val ACTION_START = "top.yukonga.mishka.action.WIFI_POLICY_START"
-    const val ACTION_STOP = "top.yukonga.mishka.action.WIFI_POLICY_STOP"
-    const val ACTION_EVALUATE = "top.yukonga.mishka.action.WIFI_POLICY_EVALUATE"
+    const val ACTION_START = "${BuildConfig.APPLICATION_ID}.action.WIFI_POLICY_START"
+    const val ACTION_STOP = "${BuildConfig.APPLICATION_ID}.action.WIFI_POLICY_STOP"
+    const val ACTION_EVALUATE = "${BuildConfig.APPLICATION_ID}.action.WIFI_POLICY_EVALUATE"
 }
 
 enum class WifiPolicyAction(val storageValue: String) {

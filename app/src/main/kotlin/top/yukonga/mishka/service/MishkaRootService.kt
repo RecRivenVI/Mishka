@@ -18,6 +18,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import top.yukonga.mishka.BuildConfig
 import top.yukonga.mishka.MishkaApplication
 import top.yukonga.mishka.R
 import top.yukonga.mishka.data.repository.OverrideJsonStore
@@ -793,9 +794,9 @@ class MishkaRootService : Service() {
 
         private fun bumpInstanceSerial(): Int = synchronized(this) { ++instanceSerial }
 
-        const val ACTION_START = "top.yukonga.mishka.ROOT_START"
-        const val ACTION_STOP = "top.yukonga.mishka.ROOT_STOP"
-        const val ACTION_RESTART = "top.yukonga.mishka.ROOT_RESTART"
+        const val ACTION_START = "${BuildConfig.APPLICATION_ID}.ROOT_START"
+        const val ACTION_STOP = "${BuildConfig.APPLICATION_ID}.ROOT_STOP"
+        const val ACTION_RESTART = "${BuildConfig.APPLICATION_ID}.ROOT_RESTART"
         const val EXTRA_SUBMODE = "submode"
         const val EXTRA_ATTACH_ONLY = "attach_only"
 

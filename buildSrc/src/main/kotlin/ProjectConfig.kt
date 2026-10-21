@@ -2,6 +2,7 @@ import org.gradle.api.Project
 
 object ProjectConfig {
     const val APP_NAME = "Mishka"
+    const val APPLICATION_ID = "io.github.recrivenvi.mishka"
     const val PACKAGE_NAME = "top.yukonga.mishka"
     const val VERSION_NAME = "1.0.0"
 

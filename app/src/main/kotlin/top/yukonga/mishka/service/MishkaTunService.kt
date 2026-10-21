@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import top.yukonga.mishka.BuildConfig
 import top.yukonga.mishka.MishkaApplication
 import top.yukonga.mishka.R
 import top.yukonga.mishka.data.repository.OverrideJsonStore
@@ -494,9 +495,9 @@ class MishkaTunService : VpnService() {
 
         /** 进程意外退出时随错误一起展示的日志行数 */
         private const val DEATH_LOG_LINES = 10
-        const val ACTION_START = "top.yukonga.mishka.START"
-        const val ACTION_STOP = "top.yukonga.mishka.STOP"
-        const val ACTION_RESTART = "top.yukonga.mishka.RESTART"
+        const val ACTION_START = "${BuildConfig.APPLICATION_ID}.START"
+        const val ACTION_STOP = "${BuildConfig.APPLICATION_ID}.STOP"
+        const val ACTION_RESTART = "${BuildConfig.APPLICATION_ID}.RESTART"
 
         private const val TUN_SUBNET_PREFIX = 30
         private const val TUN_GATEWAY = "198.18.0.1"
